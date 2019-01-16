@@ -50,9 +50,9 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QVBoxLayout, QWidget)
 
 
-class WidgetGallery(QDialog):
+class SelectStreams(QDialog):
     def __init__(self, parent=None):
-        super(WidgetGallery, self).__init__(parent)
+        super(SelectStreams, self).__init__(parent)
 
         self.originalPalette = QApplication.palette()
 
@@ -140,7 +140,10 @@ class WidgetGallery(QDialog):
             self.streams.remove('ritmo')
 
     def btnPressed(self):
-        print(self.streams)
+        window_ = Initialize(self.streams, 0)
+        window_.show()
+        self.close()
+        #print(self.streams)
 
     def changeStyle(self, styleName):
         QApplication.setStyle(QStyleFactory.create(styleName))
@@ -152,10 +155,10 @@ class WidgetGallery(QDialog):
         else:
             QApplication.setPalette(self.originalPalette)
 
-    def advanceProgressBar(self):
-        curVal = self.progressBar.value()
-        maxVal = self.progressBar.maximum()
-        self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
+    def advanceprogressbar(self):
+        curval = self.progressbar.value()
+        maxval = self.progressbar.maximum()
+        self.progressbar.setvalue(curval + (maxval - curval) / 100)
 
     def createTopLeftGroupBox(self):
         self.topLeftGroupBox = QGroupBox("Streams")
@@ -277,12 +280,99 @@ class WidgetGallery(QDialog):
         timer.timeout.connect(self.advanceProgressBar)
         timer.start(1000)
 
+class Initialize(QDialog):
+    def __init__(self, streams, ind, parent=None):
+        super(Initialize, self).__init__(parent)
+
+        self.streams = streams
+        self.originalPalette = QApplication.palette()
+
+        styleComboBox = QComboBox()
+        styleComboBox.addItems(QStyleFactory.keys())
+
+        styleLabel = QLabel("&Style:")
+        styleLabel.setBuddy(styleComboBox)
+
+        self.useStylePaletteCheckBox = QCheckBox("&Use style's standard palette")
+        self.useStylePaletteCheckBox.setChecked(True)
+
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
+
+        self.createTopRightGroupBox(ind)
+        self.createProgressBar()
+
+        styleComboBox.activated[str].connect(self.changeStyle)
+        self.useStylePaletteCheckBox.toggled.connect(self.changePalette)
+        
+        disableWidgetsCheckBox.toggled.connect(self.topRightGroupBox.setDisabled)
+
+        topLayout = QHBoxLayout()
+        topLayout.addWidget(styleLabel)
+        topLayout.addWidget(styleComboBox)
+        topLayout.addStretch(1)
+        topLayout.addWidget(self.useStylePaletteCheckBox)
+        topLayout.addWidget(disableWidgetsCheckBox)
+
+        mainLayout = QGridLayout()
+        mainLayout.addWidget(self.topRightGroupBox, 1, 1)
+        mainLayout.setRowStretch(1, 1)
+        mainLayout.setRowStretch(2, 1)
+        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(1, 1)
+
+        button = QPushButton("Create")
+        button.setCheckable(True)
+        button.clicked.connect(lambda:self.createPressed(ind))
+        mainLayout.addWidget(button)
+
+        self.setLayout(mainLayout)
+        
+        self.setWindowTitle("Instanciar CNNs")
+        self.changeStyle('Windows')
+
+    def createPressed(self, ind):
+        ind += 1
+        window_ = Initialize(self.streams, ind)
+        window_.show()
+        self.close()
+    
+    def createTopRightGroupBox(self, ind):
+        stream = self.streams[ind]
+        self.topRightGroupBox = QGroupBox("Select initialization weights to " + stream)
+
+        layout = QVBoxLayout()
+        layout.addStretch(1)
+        self.topRightGroupBox.setLayout(layout)
+
+    def changeStyle(self, styleName):
+        QApplication.setStyle(QStyleFactory.create(styleName))
+        self.changePalette()
+
+    def changePalette(self):
+        if (self.useStylePaletteCheckBox.isChecked()):
+            QApplication.setPalette(QApplication.style().standardPalette())
+        else:
+            QApplication.setPalette(self.originalPalette)
+
+    def createProgressBar(self):
+        self.progressBar = QProgressBar()
+        self.progressBar.setRange(0, 10000)
+        self.progressBar.setValue(0)
+
+        timer = QTimer(self)
+        timer.timeout.connect(self.advanceProgressBar)
+        timer.start(1)
+
+    def advanceProgressBar(self):
+        curVal = self.progressBar.value()
+        maxVal = self.progressBar.maximum()
+     
 
 if __name__ == '__main__':
 
     import sys
 
     app = QApplication(sys.argv)
-    gallery = WidgetGallery()
-    gallery.show()
+    window_ = SelectStreams()
+    window_.show()
     sys.exit(app.exec_()) 
