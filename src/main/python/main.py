@@ -41,13 +41,15 @@
 ##
 #############################################################################
 
+
+import os
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDateTime, Qt, QTimer
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget)
+        QVBoxLayout, QWidget, QFileDialog)
 
 
 class SelectStreams(QDialog):
@@ -320,10 +322,17 @@ class Initialize(QDialog):
         mainLayout.setColumnStretch(0, 1)
         mainLayout.setColumnStretch(1, 1)
 
-        button = QPushButton("Create")
-        button.setCheckable(True)
-        button.clicked.connect(lambda:self.createPressed(ind))
-        mainLayout.addWidget(button)
+        createButton = QPushButton("Create")
+        createButton.setCheckable(True)
+        createButton.clicked.connect(lambda:self.createPressed(ind))
+        mainLayout.addWidget(createButton)
+
+
+        fileButton = QPushButton("Select file")
+        fileButton.setCheckable(True)
+        fileButton.clicked.connect(lambda:self.filePressed(ind))
+        mainLayout.addWidget(fileButton)
+
 
         self.setLayout(mainLayout)
         
@@ -331,11 +340,26 @@ class Initialize(QDialog):
         self.changeStyle('Windows')
 
     def createPressed(self, ind):
+        if len(self.fileDialog.selectedFiles()) > 1:
+            print("ERROR! Select only one file")
+            self.close()
+
+        os.system('python3 multi-stream-vgg16.py -streams ' + self.streams[ind] + ' -weight ' + self.fileDialog.selectedFiles()[0])
+        
         ind += 1
+
+        if ind >= len(self.streams):
+            sys.exit(app.exec_()) 
+
         window_ = Initialize(self.streams, ind)
         window_.show()
         self.close()
     
+    def filePressed(self, ind):
+
+        self.fileDialog = QFileDialog(self)
+        self.fileDialog.show()
+
     def createTopRightGroupBox(self, ind):
         stream = self.streams[ind]
         self.topRightGroupBox = QGroupBox("Select initialization weights to " + stream)
